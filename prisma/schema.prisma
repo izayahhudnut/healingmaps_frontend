@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  active
+  inactive
+}
+
+model Provider {
+  id          Int       @id @default(autoincrement())
+  firstName   String?
+  lastName    String?
+  clerkUserID String    @unique
+  imageURL    String?
+  email       String    @unique
+  credentials String?
+  npiNumber   String?
+  healthcare  Boolean   @default(false)
+  facilityId  Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  facility    Facility? @relation(fields: [facilityId], references: [id])
+}
+
+model Facility {
+  id             Int        @id @default(autoincrement())
+  clerkId        String     @unique
+  name           String
+  address        String
+  city           String
+  email          String     @unique
+  state          String
+  zip            String
+  phone          String
+  primaryContact String
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime?  @updatedAt
+  patients       Patient[]
+  providers      Provider[]
+}
+
+model Patient {
+  id                  Int          @id @default(autoincrement())
+  firstName           String
+  slug                String       @unique
+  lastName            String
+  dob                 DateTime
+  gender              String
+  status              Status       @default(active)
+  facilityId          Int?
+  KetissuedOn         DateTime?
+  KetexpiresOn        DateTime?
+  race                String
+  email               String
+  thcInteraction      Boolean?     @default(false)
+  cbdInteraction      Boolean?     @default(false)
+  ketamineInteraction Boolean?     @default(false)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime?    @updatedAt
+  assessmentData      Json?
+  alerts              Alert[]
+  medications         Medication[]
+  notes               Note[]
+  facility            Facility?    @relation(fields: [facilityId], references: [id])
+}
+
+model Note {
+  id        Int      @id @default(autoincrement())
+  text      String
+  createdAt DateTime @default(now())
+  patientId Int
+  title     String
+  patient   Patient  @relation(fields: [patientId], references: [id])
+}
+
+model Alert {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String
+  patientId   Int
+  patient     Patient @relation(fields: [patientId], references: [id])
+}
+
+model Medication {
+  id           Int     @id @default(autoincrement())
+  medicationId Int
+  name         String
+  patientId    Int
+  patient      Patient @relation(fields: [patientId], references: [id])
+}
