@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import prisma from "@/lib/prisma";
 
 interface PatientData {
   firstName: string;
@@ -9,18 +9,18 @@ interface PatientData {
   KetexpiresOn?: Date | null;
   race: string;
   email: string;
-  assessmentData?: any;  
+  assessmentData?: any;
 }
 
 export async function getAllPatients() {
   try {
     return await prisma.patient.findMany({
       include: { facility: true },
-      orderBy: { lastName: 'asc' },
+      orderBy: { lastName: "asc" },
     });
   } catch (error) {
-    console.error('Error fetching all patients:', error);
-    throw new Error('Failed to fetch patients');
+    console.error("Error fetching all patients:", error);
+    throw new Error("Failed to fetch patients");
   }
 }
 
@@ -30,33 +30,35 @@ export async function getPatientBySlug(slug: string) {
       where: { slug },
       include: { facility: true },
     });
-    
+
     if (!patient) {
       throw new Error(`Patient with slug "${slug}" not found`);
     }
-    
+
     return patient;
   } catch (error) {
-    console.error('Error fetching patient by slug:', error);
-    throw new Error('Failed to fetch patient');
+    console.error("Error fetching patient by slug:", error);
+    throw new Error("Failed to fetch patient");
   }
 }
 
 export async function createPatient(data: PatientData) {
   try {
     const slug = generateSlug(data.firstName, data.lastName);
-    
+
     // Create the base patient data object with required fields
     const patientData = {
       ...data,
       slug,
       KetissuedOn: data.KetissuedOn || null,
       KetexpiresOn: data.KetexpiresOn || null,
-      race: data.race || 'Not Specified',
-      
+      race: data.race || "Not Specified",
+
       // If you want to allow creating with assessmentData (optional)
-      assessmentData: data.assessmentData || null,
+      assessmentData: data.assessmentData || {},
     };
+
+    console.log("Creating patient with data:", patientData);
 
     const patient = await prisma.patient.create({
       data: patientData,
@@ -67,16 +69,15 @@ export async function createPatient(data: PatientData) {
 
     return patient;
   } catch (error) {
-    console.error('Error in Prisma create function:', error);
+    console.error("Error in Prisma create function:", error);
     if (error instanceof Error) {
       throw new Error(`Failed to create patient: ${error.message}`);
     }
-    throw new Error('Failed to create patient');
+    throw new Error("Failed to create patient");
   }
 }
 
-
-export async function updatePatient(id: number, data: Partial<PatientData>) {
+export async function updatePatient(id: string, data: Partial<PatientData>) {
   try {
     const currentPatient = await prisma.patient.findUnique({
       where: { id },
@@ -88,12 +89,13 @@ export async function updatePatient(id: number, data: Partial<PatientData>) {
     }
 
     // Generate new slug only if name is being updated
-    const slug = (data.firstName || data.lastName)
-      ? generateSlug(
-          data.firstName || currentPatient.firstName,
-          data.lastName || currentPatient.lastName
-        )
-      : currentPatient.slug;
+    const slug =
+      data.firstName || data.lastName
+        ? generateSlug(
+            data.firstName || currentPatient.firstName,
+            data.lastName || currentPatient.lastName
+          )
+        : currentPatient.slug;
 
     // Prepare update data
     const updateData = {
@@ -101,8 +103,10 @@ export async function updatePatient(id: number, data: Partial<PatientData>) {
       slug,
       // Ensure date fields are properly handled
       dob: data.dob || undefined,
-      KetissuedOn: data.KetissuedOn === undefined ? undefined : data.KetissuedOn,
-      KetexpiresOn: data.KetexpiresOn === undefined ? undefined : data.KetexpiresOn,
+      KetissuedOn:
+        data.KetissuedOn === undefined ? undefined : data.KetissuedOn,
+      KetexpiresOn:
+        data.KetexpiresOn === undefined ? undefined : data.KetexpiresOn,
       race: data.race || undefined,
 
       // If we pass 'assessmentData' in data, store it; otherwise leave it alone
@@ -122,16 +126,15 @@ export async function updatePatient(id: number, data: Partial<PatientData>) {
 
     return updatedPatient;
   } catch (error) {
-    console.error('Error updating patient:', error);
+    console.error("Error updating patient:", error);
     if (error instanceof Error) {
       throw new Error(`Failed to update patient: ${error.message}`);
     }
-    throw new Error('Failed to update patient');
+    throw new Error("Failed to update patient");
   }
 }
 
-
-export async function deletePatient(id: number) {
+export async function deletePatient(id: string) {
   try {
     const deletedPatient = await prisma.patient.delete({
       where: { id },
@@ -143,15 +146,15 @@ export async function deletePatient(id: number) {
 
     return deletedPatient;
   } catch (error) {
-    console.error('Error deleting patient:', error);
+    console.error("Error deleting patient:", error);
     if (error instanceof Error) {
       throw new Error(`Failed to delete patient: ${error.message}`);
     }
-    throw new Error('Failed to delete patient');
+    throw new Error("Failed to delete patient");
   }
 }
 
-export async function getPatientById(id: number) {
+export async function getPatientById(id: string) {
   try {
     const patient = await prisma.patient.findUnique({
       where: { id },
@@ -160,7 +163,7 @@ export async function getPatientById(id: number) {
         alerts: true,
         medications: true,
         notes: true,
-        // JSON fields are scalar fields, so generally included by default. 
+        // JSON fields are scalar fields, so generally included by default.
         // If you prefer explicit, you can do:
         // select: {
         //   // other fields
@@ -175,17 +178,15 @@ export async function getPatientById(id: number) {
 
     return patient;
   } catch (error) {
-    console.error('Error fetching patient by ID:', error);
-    throw new Error('Failed to fetch patient');
+    console.error("Error fetching patient by ID:", error);
+    throw new Error("Failed to fetch patient");
   }
 }
 
-  
-
 function generateSlug(firstName: string, lastName: string): string {
   const timestamp = Date.now();
-  const sanitizedFirstName = firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const sanitizedLastName = lastName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const sanitizedFirstName = firstName.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const sanitizedLastName = lastName.toLowerCase().replace(/[^a-z0-9]/g, "");
   return `${sanitizedFirstName}-${sanitizedLastName}-${timestamp}`;
 }
 
@@ -194,19 +195,19 @@ export async function searchPatients(searchTerm: string) {
     return await prisma.patient.findMany({
       where: {
         OR: [
-          { firstName: { contains: searchTerm, mode: 'insensitive' } },
-          { lastName: { contains: searchTerm, mode: 'insensitive' } },
-          { email: { contains: searchTerm, mode: 'insensitive' } },
+          { firstName: { contains: searchTerm, mode: "insensitive" } },
+          { lastName: { contains: searchTerm, mode: "insensitive" } },
+          { email: { contains: searchTerm, mode: "insensitive" } },
         ],
       },
       include: { facility: true },
-      orderBy: { lastName: 'asc' },
+      orderBy: { lastName: "asc" },
     });
   } catch (error) {
-    console.error('Error searching patients:', error);
+    console.error("Error searching patients:", error);
     if (error instanceof Error) {
       throw new Error(`Failed to search patients: ${error.message}`);
     }
-    throw new Error('Failed to search patients');
+    throw new Error("Failed to search patients");
   }
 }

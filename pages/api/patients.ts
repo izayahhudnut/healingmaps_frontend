@@ -84,6 +84,8 @@ async function handleCreatePatient(req: NextApiRequest, res: NextApiResponse) {
       facilityId, // Use the facilityId from the request body
     };
 
+    console.log("Sanitized data:", sanitizedData);
+
     const newPatient = await createPatient(sanitizedData); // Ensure the `createPatient` function handles `facilityId`
     return res.status(201).json(newPatient);
   } catch (error) {
@@ -100,7 +102,7 @@ async function handleDeletePatient(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    const deletedPatient = await deletePatient(Number(id));
+    const deletedPatient = await deletePatient(id);
     return res
       .status(200)
       .json({ message: "Patient deleted successfully", deletedPatient });

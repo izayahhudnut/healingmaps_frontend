@@ -6,6 +6,7 @@ export default async function HomeSection() {
   // Get the user's first name from the session
   const session = await auth();
   const firstName = session?.user?.name || "User";
+  // @ts-ignore
   const role = session?.user?.role || "User";
   console.log("Role:", role);
 

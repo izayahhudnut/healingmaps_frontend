@@ -47,17 +47,13 @@ const SignIn = () => {
 
     try {
       const result = await signIn("credentials", {
-        redirect: false, // Prevent auto-redirect
         email: data.email,
         password: data.password,
-      });
 
-      if (result?.error) {
-        setError(result.error);
-      } else {
-        router.push("/"); // Redirect to homepage on successful login
-      }
+        redirect: false,
+      });
     } catch (err) {
+      console.error(err);
       setError("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
@@ -143,12 +139,12 @@ const SignIn = () => {
 
       {error && <p className="text-red-500 text-center">{error}</p>}
 
-      <Button
+      {/* <Button
         variant="secondary"
         onClick={() => signIn("google", { callbackUrl: "/" })}
       >
         <FcGoogle className="mr-2" /> Sign In with Google
-      </Button>
+      </Button> */}
 
       <div>
         <p className="text-center text-gray-600">

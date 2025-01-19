@@ -4,7 +4,8 @@ import { getFacilityById } from "@/lib/facility";
 
 export default async function Page() {
   const session = await auth();
-  const role = session?.user.role;
+  // @ts-ignore
+  const role = session.user.role;
   console.log(role);
 
   if (!session?.user) {
@@ -13,9 +14,13 @@ export default async function Page() {
 
   const email = session?.user.email;
 
+  if (!email) {
+    throw new Error("Email not found");
+  }
+
   const data = await getFacilityById(email);
 
-  console.log(data);
+  console.log(data, "data");
 
   if (!data) {
     throw new Error("Facility not found");
@@ -23,7 +28,7 @@ export default async function Page() {
 
   return (
     <div>
-      <Provider data={data.providers} role={role} />
+      <Provider data={data} role={role} />
     </div>
   );
 }

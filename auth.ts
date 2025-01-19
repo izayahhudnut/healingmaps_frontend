@@ -22,11 +22,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           placeholder: "********",
         },
       },
+      // @ts-ignore
       async authorize(credentials: Record<"email" | "password", string>) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Please provide both email and password.");
         }
 
+        console.log("Authorizing user");
         const user = await prisma.user.findUnique({
           where: { email: credentials?.email as string },
         });

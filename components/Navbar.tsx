@@ -14,17 +14,25 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Settings, LogOut } from "lucide-react";
-import { auth, signOut } from "@/auth";
+import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
+  const router = useRouter();
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  const user = session?.user;
+  // @ts-ignore
+  const user: any = session?.user;
 
   const getLinkClass = (path: string) =>
     pathname === path ? " border-b-2 border-purple-400" : "hover:bg-gray-500";
+
+  const onSignOut = () => {
+    signOut();
+    router.push("/sign-in");
+  };
 
   return (
     <nav className="bg-gray-700 w-full">
@@ -89,7 +97,7 @@ export default function Navbar() {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => signOut()}
+                  onClick={onSignOut}
                   className="text-red-600 focus:text-red-600"
                 >
                   <LogOut className="mr-2 h-4 w-4" />

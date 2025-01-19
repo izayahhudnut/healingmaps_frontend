@@ -39,6 +39,7 @@ model Provider {
   email       String    @unique
   credentials String?
   npiNumber   String?
+  status      Status    @default(active)
   userId      String
   user        User      @relation(fields: [userId], references: [id])
   healthcare  Boolean   @default(false)

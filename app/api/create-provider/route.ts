@@ -1,8 +1,21 @@
 import prisma from "@/lib/prisma";
 import { NextRequest } from "next/server";
+import bcrypt from "bcryptjs";
+
+// id          String    @id @default(cuid())
+// firstName   String?
+// lastName    String?
+// imageURL    String?
+// email       String    @unique
+// credentials String?
+// npiNumber   String?
+// userId      String
+// user        User      @relation(fields: [userId], references: [id])
+// healthcare  Boolean   @default(false)
+// facilityId  String?
 
 interface ProviderPayload {
-  clerkUserId: string;
+  userId: string;
   email: string;
   firstName?: string;
   lastName?: string;
@@ -10,7 +23,8 @@ interface ProviderPayload {
   credentials?: string;
   npiNumber?: string;
   healthcare?: boolean;
-  facilityId?: number;
+  facilityId?: string;
+  password: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -26,7 +40,6 @@ export async function POST(req: NextRequest) {
     console.log("Webhook payload:", payload);
 
     const {
-      clerkUserId,
       email,
       firstName,
       lastName,
@@ -39,7 +52,6 @@ export async function POST(req: NextRequest) {
 
     // Log the data being passed to Prisma
     console.log("Data passed to Prisma:", {
-      clerkUserId,
       email,
       firstName,
       lastName,
@@ -50,9 +62,39 @@ export async function POST(req: NextRequest) {
       facilityId,
     });
 
+    const user = await prisma.user.findUnique({
+      where: { email: email },
+    });
+
+    if (user) {
+      return new Response(
+        JSON.stringify({ error: "User with this email already exists" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    const hashedPassword = await bcrypt.hash(payload.password, 10);
+
+    const createUser = await prisma.user.upsert({
+      where: { email: email },
+      update: {
+        email: email,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        password: hashedPassword,
+        role: "PROVIDER",
+      },
+      create: {
+        email: email,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        password: hashedPassword,
+        role: "PROVIDER",
+      },
+    });
+
     const provider = await prisma.provider.create({
       data: {
-        clerkUserID: clerkUserId,
+        userId: createUser.id,
         email: email,
         firstName: firstName || null,
         lastName: lastName || null,

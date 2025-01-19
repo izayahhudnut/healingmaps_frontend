@@ -69,16 +69,20 @@ export async function POST(req: NextRequest) {
       password: hashedPassword,
     });
 
-    const createUser = await prisma.user.upsert({
+    const user = await prisma.user.findUnique({
       where: { email },
-      update: {
-        email,
-        password: hashedPassword,
-        firstName,
-        lastName,
-        role: "FACILITY",
-      },
-      create: {
+    });
+
+    if (user) {
+      console.error("User already exists with this email:", email);
+      return new Response(
+        JSON.stringify({ error: "User already exists with this email" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const createUser = await prisma.user.create({
+      data: {
         email,
         password: hashedPassword,
         firstName,
