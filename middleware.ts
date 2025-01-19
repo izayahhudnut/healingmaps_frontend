@@ -1,45 +1,45 @@
-export { auth as middleware } from "@/auth";
-// import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { NextRequest, NextResponse } from "next/server";
 
-// const isPublicRoute = [
-//   "/sign-in",
-//   "/sign-up",
-//   "/api/webhooks", // Exclude the webhook route from authentication
-//   "/api/create-facility",
-//   "/api/create-provider",
-// ];
+const isPublicRoute = [
+  "/sign-in",
+  "/sign-up",
+  "/api/webhooks", // Exclude the webhook route from authentication
+  "/api/create-facility",
+  "/api/create-provider",
+];
 
-// export async function middleware(request: NextRequest) {
-//   const { nextUrl } = request;
+export async function middleware(request: NextRequest) {
+  const { nextUrl } = request;
 
-//   // Check if the current route matches any public route
-//   const isPublic = isPublicRoute.some((route) =>
-//     nextUrl.pathname.startsWith(route)
-//   );
+  // Check if the current route matches any public route
+  const isPublic = isPublicRoute.some((route) =>
+    nextUrl.pathname.startsWith(route)
+  );
 
-//   // If the route is public, allow the request
-//   if (isPublic) {
-//     return NextResponse.next();
-//   }
+  // If the route is public, allow the request
+  if (isPublic) {
+    return NextResponse.next();
+  }
 
-//   // Check for authentication
-//   const session = await auth();
-//   const isAuthenticated: boolean = !!session?.user;
+  // Check for authentication
+  const session = await auth();
+  const isAuthenticated: boolean = !!session?.user;
 
-//   console.log("Session:", session, "isAuthenticated:", isAuthenticated);
+  console.log("Session:", session, "isAuthenticated:", isAuthenticated);
 
-//   if (!isAuthenticated && !isPublic) {
-//     // Redirect to sign-in page if not authenticated
-//     return NextResponse.redirect(new URL("/sign-in", request.url));
-//   }
+  if (!isAuthenticated && !isPublic) {
+    // Redirect to sign-in page if not authenticated
+    return NextResponse.redirect(new URL("/sign-in", request.url));
+  }
 
-//   // If authenticated, allow the request
-//   return NextResponse.next();
-// }
+  // If authenticated, allow the request
+  return NextResponse.next();
+}
 
-// export const config = {
-//   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
-// };
+export const config = {
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};
 
 // export const config = {
 //   matcher: [
