@@ -16,7 +16,7 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { useForm } from "react-hook-form";
 import { ProviderCreate } from "@/lib/zod/schema";
-import { useSignUp } from "@clerk/clerk-react";
+
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import { useRouter } from "next/navigation";

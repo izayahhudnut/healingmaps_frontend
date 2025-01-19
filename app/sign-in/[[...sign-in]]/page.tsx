@@ -1,5 +1,5 @@
 import SignIn from "@/components/SignIn";
-import { currentUser } from "@clerk/nextjs/server";
+
 import { useRouter } from "next/navigation";
 
 export default async function Page() {

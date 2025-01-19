@@ -1,13 +1,15 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@/auth";
 
 export default async function HomeSection() {
   // Get the userId from auth() -- if null, the user is not signed in
 
-  const user = await currentUser();
-  const firstName = user?.firstName || "User";
-  const role = user?.unsafeMetadata.role;
+  // Get the user's first name from the session
+  const session = await auth();
+  const firstName = session?.user?.name || "User";
+  const role = session?.user?.role || "User";
+  console.log("Role:", role);
 
-  console.log(user?.unsafeMetadata.role);
+  console.log("Session:", session);
 
   return (
     <div className="p-8 bg-white max-w-[60rem] mx-auto">
@@ -72,7 +74,7 @@ export default async function HomeSection() {
             Go
           </a>
         </div>
-        {role === "facility" && (
+        {role === "FACILITY" && (
           <div className="border border-gray-200 rounded-lg p-4 shadow hover:shadow-md transition bg-white">
             <h2 className="text-lg font-medium text-gray-800 mb-2">
               Back to HealingMaps

@@ -12,26 +12,48 @@ enum Status {
   inactive
 }
 
+enum Role {
+  FACILITY
+  PROVIDER
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  firstName String?
+  lastName  String?
+  image     String?
+  role      Role
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  Provider  Provider[]
+  Facility  Facility[]
+}
+
 model Provider {
-  id          Int       @id @default(autoincrement())
+  id          String    @id @default(cuid())
   firstName   String?
   lastName    String?
-  clerkUserID String    @unique
   imageURL    String?
   email       String    @unique
   credentials String?
   npiNumber   String?
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
   healthcare  Boolean   @default(false)
-  facilityId  Int?
+  facilityId  String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   facility    Facility? @relation(fields: [facilityId], references: [id])
 }
 
 model Facility {
-  id             Int        @id @default(autoincrement())
-  clerkId        String     @unique
-  name           String
+  id             String     @id @default(cuid())
+  userId         String
+  user           User       @relation(fields: [userId], references: [id])
+  firstName      String?
+  lastName       String?
   address        String
   city           String
   email          String     @unique
@@ -46,14 +68,14 @@ model Facility {
 }
 
 model Patient {
-  id                  Int          @id @default(autoincrement())
+  id                  String       @id @default(cuid())
   firstName           String
   slug                String       @unique
   lastName            String
   dob                 DateTime
   gender              String
   status              Status       @default(active)
-  facilityId          Int?
+  facilityId          String?
   KetissuedOn         DateTime?
   KetexpiresOn        DateTime?
   race                String
@@ -71,26 +93,26 @@ model Patient {
 }
 
 model Note {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   text      String
   createdAt DateTime @default(now())
-  patientId Int
+  patientId String
   title     String
   patient   Patient  @relation(fields: [patientId], references: [id])
 }
 
 model Alert {
-  id          Int     @id @default(autoincrement())
+  id          String  @id @default(cuid())
   title       String
   description String
-  patientId   Int
+  patientId   String
   patient     Patient @relation(fields: [patientId], references: [id])
 }
 
 model Medication {
-  id           Int     @id @default(autoincrement())
+  id           String  @id @default(cuid())
   medicationId Int
   name         String
-  patientId    Int
+  patientId    String
   patient      Patient @relation(fields: [patientId], references: [id])
 }

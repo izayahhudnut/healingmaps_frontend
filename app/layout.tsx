@@ -2,13 +2,7 @@ import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import localFont from "next/font/local";
 import "./globals.css";
-import {
-  ClerkProvider,
-  SignInButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from "@clerk/nextjs";
+import { SessionProvider } from "next-auth/react";
 import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = localFont({
@@ -35,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <ClerkProvider>
+      <SessionProvider>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
@@ -44,7 +38,7 @@ export default function RootLayout({
           {children}
           <Toaster />
         </body>
-      </ClerkProvider>
+      </SessionProvider>
     </html>
   );
 }

@@ -1,22 +1,36 @@
 import prisma from "@/lib/prisma";
 import { NextRequest } from "next/server";
+import bcrypt from "bcryptjs";
+
+// userId         String
+// user           User       @relation(fields: [userId], references: [id])
+// firstName      String?
+// lastName       String?
+// address        String
+// city           String
+// email          String     @unique
+// state          String
+// zip            String
+// phone          String
+// primaryContact String
 
 interface FacilityPayload {
-  id: string;
   email: string;
-  name: string;
+  firstName: string;
+  lastName: string;
+  userId: string;
   address: string;
   city: string;
   state: string;
   zipCode: string;
   phoneNumber: string;
   primaryContact: string;
-  website?: string;
+  password: string;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const payload = await req.json();
+    const payload: FacilityPayload = await req.json();
     if (!payload || typeof payload !== "object") {
       console.error("Invalid payload received:", payload);
       return new Response(JSON.stringify({ error: "Invalid payload format" }), {
@@ -27,42 +41,79 @@ export async function POST(req: NextRequest) {
     console.log("Webhook payload:", payload);
 
     const {
-      id,
       email,
-      name,
+      firstName,
+      lastName,
       address,
       city,
       state,
       zipCode,
       phoneNumber,
       primaryContact,
+      password,
     } = payload;
+
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Log the data being passed to Prisma
     console.log("Data passed to Prisma:", {
-      clerkId: id,
-      name,
       email,
+      firstName,
+      lastName,
       address,
       city,
       state,
       zip: zipCode,
-      phone: phoneNumber,
+      phoneNumber,
       primaryContact,
+      password: hashedPassword,
     });
 
-    const facility = await prisma.facility.create({
-      data: {
-        clerkId: id,
-        name,
+    const createUser = await prisma.user.upsert({
+      where: { email },
+      update: {
         email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        role: "FACILITY",
+      },
+      create: {
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        role: "FACILITY",
+      },
+    });
+
+    console.log("User created:", createUser);
+
+    const facility = await prisma.facility.upsert({
+      where: { email },
+      update: {
+        email,
+        firstName,
+        lastName,
         address,
         city,
         state,
         zip: zipCode,
         phone: phoneNumber,
         primaryContact,
-        // Include website if provided
+        userId: createUser.id,
+      },
+      create: {
+        email,
+        firstName,
+        lastName,
+        address,
+        city,
+        state,
+        zip: zipCode,
+        phone: phoneNumber,
+        primaryContact,
+        userId: createUser.id,
       },
     });
 

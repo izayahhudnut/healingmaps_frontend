@@ -1,11 +1,12 @@
 "use client";
+
 import React, { useState } from "react";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { FcGoogle } from "react-icons/fc";
-import { useAuth, useSignIn } from "@clerk/clerk-react";
+
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import {
@@ -17,19 +18,15 @@ import {
   FormMessage,
 } from "./ui/form";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
-import { set } from "zod";
+import { signIn, useSession } from "next-auth/react";
 
 const SignIn = () => {
-  const user = useAuth();
-  const { isLoaded, signIn, setActive } = useSignIn();
+  const { data: session } = useSession();
+  const router = useRouter();
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-
-  if (user?.userId) {
-    router.push("/");
-  }
 
   const form = useForm({
     defaultValues: {
@@ -38,41 +35,38 @@ const SignIn = () => {
     },
   });
 
-  const onSubmit = async (data: any) => {
-    if (!isLoaded) return;
-    setIsLoading(true);
+  // Redirect if already signed in
+  if (session?.user) {
+    router.push("/");
+    return null;
+  }
 
-    console.log(data);
+  const onSubmit = async (data: { email: string; password: string }) => {
+    setIsLoading(true);
+    setError(null);
+
     try {
-      const signInAttempt = await signIn.create({
-        identifier: data.email,
+      const result = await signIn("credentials", {
+        redirect: false, // Prevent auto-redirect
+        email: data.email,
         password: data.password,
       });
-      console.log(signInAttempt);
 
-      if (signInAttempt.status === "complete") {
-        await setActive({ session: signInAttempt.createdSessionId });
-        router.push("/");
+      if (result?.error) {
+        setError(result.error);
       } else {
-        // If the status is not complete, check why. User may need to
-        // complete further steps.
-        console.error(JSON.stringify(signInAttempt, null, 2));
+        router.push("/"); // Redirect to homepage on successful login
       }
-    } catch (error: any) {
-      setError(error.message);
-      console.log(error);
+    } catch (err) {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
     <div className="max-w-lg w-1/3 flex flex-col gap-2 p-6 my-auto rounded-lg shadow-lg space-y-4">
-      <h1
-        className="text-2xl font-semibold
-        text-center"
-      >
-        Sign In
-      </h1>
+      <h1 className="text-2xl font-semibold text-center">Sign In</h1>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -83,7 +77,6 @@ const SignIn = () => {
               placeholder: "example@example.com",
               required: true,
             },
-
             {
               name: "password",
               label: "Password",
@@ -136,27 +129,30 @@ const SignIn = () => {
           <div className="flex justify-end">
             <p className="text-right underline text-gray-600">
               <Link href="/forget-password" className="text-blue-500">
-                forget password?
+                Forget password?
               </Link>
             </p>
           </div>
           <div className="flex justify-center">
             <Button disabled={isLoading} type="submit">
-              {isLoading ? "Signin.." : "Sign In"}
+              {isLoading ? "Signing In..." : "Sign In"}
             </Button>
           </div>
         </form>
       </Form>
 
-      {/* {error && <div>{error}</div>}
+      {error && <p className="text-red-500 text-center">{error}</p>}
 
-      <Button variant="secondary" onClick={() => {}}>
-        <FcGoogle /> Sign In with Google
-      </Button> */}
+      <Button
+        variant="secondary"
+        onClick={() => signIn("google", { callbackUrl: "/" })}
+      >
+        <FcGoogle className="mr-2" /> Sign In with Google
+      </Button>
 
-      <div className="">
+      <div>
         <p className="text-center text-gray-600">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/sign-up" className="text-blue-500">
             Sign Up
           </Link>

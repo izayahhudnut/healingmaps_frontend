@@ -1,15 +1,36 @@
+-- CreateEnum
+CREATE TYPE "Status" AS ENUM ('active', 'inactive');
+
+-- CreateEnum
+CREATE TYPE "Role" AS ENUM ('FACILITY', 'PROVIDER');
+
 -- CreateTable
-CREATE TABLE "Provider" (
-    "id" SERIAL NOT NULL,
+CREATE TABLE "User" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
     "firstName" TEXT,
     "lastName" TEXT,
-    "clerkUserID" TEXT NOT NULL,
+    "image" TEXT,
+    "role" "Role" NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Provider" (
+    "id" TEXT NOT NULL,
+    "firstName" TEXT,
+    "lastName" TEXT,
     "imageURL" TEXT,
     "email" TEXT NOT NULL,
     "credentials" TEXT,
     "npiNumber" TEXT,
+    "userId" TEXT NOT NULL,
     "healthcare" BOOLEAN NOT NULL DEFAULT false,
-    "facilityId" INTEGER,
+    "facilityId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -18,11 +39,12 @@ CREATE TABLE "Provider" (
 
 -- CreateTable
 CREATE TABLE "Facility" (
-    "id" SERIAL NOT NULL,
-    "clerkId" TEXT NOT NULL,
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "address" TEXT NOT NULL,
     "city" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
     "state" TEXT NOT NULL,
     "zip" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
@@ -35,13 +57,14 @@ CREATE TABLE "Facility" (
 
 -- CreateTable
 CREATE TABLE "Patient" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "firstName" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
     "lastName" TEXT NOT NULL,
     "dob" TIMESTAMP(3) NOT NULL,
     "gender" TEXT NOT NULL,
-    "facilityId" INTEGER,
+    "status" "Status" NOT NULL DEFAULT 'active',
+    "facilityId" TEXT,
     "KetissuedOn" TIMESTAMP(3),
     "KetexpiresOn" TIMESTAMP(3),
     "race" TEXT NOT NULL,
@@ -58,10 +81,10 @@ CREATE TABLE "Patient" (
 
 -- CreateTable
 CREATE TABLE "Note" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "text" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "patientId" INTEGER NOT NULL,
+    "patientId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
 
     CONSTRAINT "Note_pkey" PRIMARY KEY ("id")
@@ -69,38 +92,44 @@ CREATE TABLE "Note" (
 
 -- CreateTable
 CREATE TABLE "Alert" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "patientId" INTEGER NOT NULL,
+    "patientId" TEXT NOT NULL,
 
     CONSTRAINT "Alert_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Medication" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "medicationId" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
-    "patientId" INTEGER NOT NULL,
+    "patientId" TEXT NOT NULL,
 
     CONSTRAINT "Medication_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Provider_clerkUserID_key" ON "Provider"("clerkUserID");
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Provider_email_key" ON "Provider"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Facility_clerkId_key" ON "Facility"("clerkId");
+CREATE UNIQUE INDEX "Facility_email_key" ON "Facility"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Patient_slug_key" ON "Patient"("slug");
 
 -- AddForeignKey
+ALTER TABLE "Provider" ADD CONSTRAINT "Provider_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Provider" ADD CONSTRAINT "Provider_facilityId_fkey" FOREIGN KEY ("facilityId") REFERENCES "Facility"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Facility" ADD CONSTRAINT "Facility_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Patient" ADD CONSTRAINT "Patient_facilityId_fkey" FOREIGN KEY ("facilityId") REFERENCES "Facility"("id") ON DELETE SET NULL ON UPDATE CASCADE;

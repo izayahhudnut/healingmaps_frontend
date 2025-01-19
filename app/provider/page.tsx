@@ -1,17 +1,17 @@
+import { auth } from "@/auth";
 import { Provider } from "@/components/Provider";
 import { getFacilityById } from "@/lib/facility";
-import { currentUser } from "@clerk/nextjs/server";
 
 export default async function Page() {
-  const user = await currentUser();
-  const role = user?.unsafeMetadata.role as string;
-  console.log(user);
+  const session = await auth();
+  const role = session?.user.role;
+  console.log(role);
 
-  if (!user) {
+  if (!session?.user) {
     throw new Error("User not found");
   }
 
-  const email = user?.unsafeMetadata?.email as string;
+  const email = session?.user.email;
 
   const data = await getFacilityById(email);
 
