@@ -46,6 +46,8 @@ type NewPatient = {
 
 export default function PatientListSection() {
   const [patients, setPatients] = useState<Patient[]>([]);
+
+  console.log("Patients:", patients);
   const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState<boolean>(true);
@@ -68,6 +70,8 @@ export default function PatientListSection() {
 
   const { data: session }: any = useSession();
 
+  console.log("Session:", session);
+
   useEffect(() => {
     fetchPatients();
   }, []);
@@ -80,12 +84,13 @@ export default function PatientListSection() {
         throw new Error("Failed to fetch patients");
       }
       const data: Patient[] = await response.json();
+      console.log("Fetched patients data:", data);
       // Filter patients for the "Demo" facility
-      const demoFacilityPatients = data.filter(
-        (patient) => patient.facility?.name === "Demo"
-      );
-      setPatients(demoFacilityPatients);
-      setFilteredPatients(demoFacilityPatients); // Initialize the filtered list
+      // const demoFacilityPatients = data.filter(
+      //   (patient) => patient.facility?.name === "Demo"
+      // );
+      setPatients(data);
+      setFilteredPatients(data); // Initialize the filtered list
     } catch (err) {
       console.error("Error fetching patients:", err);
       setError("Unable to load patients. Please try again later.");
@@ -181,6 +186,8 @@ export default function PatientListSection() {
     return true;
   };
 
+  // In handleAddPatient function:
+
   const handleAddPatient = async () => {
     setError(null);
     if (!validateForm()) return;
@@ -191,15 +198,11 @@ export default function PatientListSection() {
         ...newPatient,
         KetissuedOn: newPatient.KetissuedOn || null,
         KetexpiresOn: newPatient.KetexpiresOn || null,
-
-        facilityId: session?.user.role === "FACILITY" ? session.user.id : "", // Explicitly provide a value for facilityId
+        facilityId: "cm63w3i260002j5rnrjf5785c",
       });
 
-      if (!response.data) {
-        throw new Error("Failed to add patient");
-      }
+      const createdPatient = response.data;
 
-      const createdPatient = await response.data;
       setPatients((prev) => [...prev, createdPatient]);
       setSuccess(true);
       setShowPopup(false);
@@ -213,19 +216,15 @@ export default function PatientListSection() {
         race: "Not Specified",
         email: "",
       });
-      setTimeout(() => setSuccess(false), 3000);
 
-      // Show success toast
-    } catch (err) {
-      console.error("Error adding patient:", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to add patient. Please try again."
-      );
+      toast.success("Patient added successfully!");
+      await fetchPatients();
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || "Failed to add patient";
+      toast.error(errorMessage);
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
-      await fetchPatients();
     }
   };
 

@@ -7,16 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Status {
-  active
-  inactive
-}
-
-enum Role {
-  FACILITY
-  PROVIDER
-}
-
 model User {
   id        String     @id @default(cuid())
   email     String     @unique
@@ -27,8 +17,8 @@ model User {
   role      Role
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  Provider  Provider[]
   Facility  Facility[]
+  Provider  Provider[]
 }
 
 model Provider {
@@ -39,22 +29,19 @@ model Provider {
   email       String    @unique
   credentials String?
   npiNumber   String?
-  status      Status    @default(active)
   userId      String
-  user        User      @relation(fields: [userId], references: [id])
   healthcare  Boolean   @default(false)
   facilityId  String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  status      Status    @default(active)
   facility    Facility? @relation(fields: [facilityId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
 }
 
 model Facility {
   id             String     @id @default(cuid())
   userId         String
-  user           User       @relation(fields: [userId], references: [id])
-  firstName      String?
-  lastName       String?
   address        String
   city           String
   email          String     @unique
@@ -64,6 +51,9 @@ model Facility {
   primaryContact String
   createdAt      DateTime   @default(now())
   updatedAt      DateTime?  @updatedAt
+  firstName      String?
+  lastName       String?
+  user           User       @relation(fields: [userId], references: [id])
   patients       Patient[]
   providers      Provider[]
 }
@@ -116,4 +106,14 @@ model Medication {
   name         String
   patientId    String
   patient      Patient @relation(fields: [patientId], references: [id])
+}
+
+enum Status {
+  active
+  inactive
+}
+
+enum Role {
+  FACILITY
+  PROVIDER
 }

@@ -1,110 +1,68 @@
+import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const {
-    firstName,
-    lastName,
-    dob,
-    gender,
-    KetissuedOn,
-    KetexpiresOn,
-    race,
-    email,
-    facilityId,
-    assessmentData,
-  } = body;
-
-  // Validate required fields
-  if (
-    !firstName ||
-    !lastName ||
-    !dob ||
-    !gender ||
-    !email ||
-    facilityId === undefined
-  ) {
-    return new Response(
-      JSON.stringify({
-        error: "Missing required fields",
-        details:
-          "First name, last name, date of birth, gender, email, and facility ID are required",
-      }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  const dobDate = new Date(dob);
-  const ketIssuedDate = KetissuedOn ? new Date(KetissuedOn) : null;
-  const ketExpiresDate = KetexpiresOn ? new Date(KetexpiresOn) : null;
-
-  if (dobDate.toString() === "Invalid Date") {
-    return new Response(
-      JSON.stringify({ error: "Invalid date of birth format" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  if (assessmentData && typeof assessmentData !== "object") {
-    return new Response(
-      JSON.stringify({ error: "Invalid assessmentData format" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  const sanitizedData = {
-    firstName: firstName.trim(),
-    lastName: lastName.trim(),
-    dob: dobDate,
-    gender,
-    KetissuedOn: ketIssuedDate,
-    KetexpiresOn: ketExpiresDate,
-    race: race || "Not Specified",
-    email: email.trim().toLowerCase(),
-    facilityId,
-    assessmentData: assessmentData ?? {}, // Default to null if undefined
-  };
-
-  console.log("Sanitized data:", sanitizedData);
-
-  console.log("Assessment Data:", assessmentData);
-
   try {
-    function generateSlug(firstName: string, lastName: string): string {
-      const timestamp = Date.now();
-      const sanitizedFirstName = firstName
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, "");
-      const sanitizedLastName = lastName
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, "");
-      return `${sanitizedFirstName}-${sanitizedLastName}-${timestamp}`;
+    const body = await req.json();
+    console.log("Received body:", body);
+
+    // Log facility check
+    console.log("Checking facility:", body.facilityId);
+    const facility = await prisma.facility.findUnique({
+      where: { id: body.facilityId },
+    });
+    console.log("Found facility:", facility);
+
+    if (!facility) {
+      console.log("Facility not found with ID:", body.facilityId);
+      return NextResponse.json(
+        { error: `Facility not found with ID: ${body.facilityId}` },
+        { status: 404 }
+      );
     }
 
-    const slug = generateSlug(sanitizedData.firstName, sanitizedData.lastName);
+    const slug = `${body.firstName}-${
+      body.lastName
+    }-${Date.now()}`.toLowerCase();
+
+    const patientData = {
+      firstName: body.firstName,
+      lastName: body.lastName,
+      dob: new Date(body.dob),
+      gender: body.gender,
+      KetissuedOn: body.KetissuedOn ? new Date(body.KetissuedOn) : null,
+      KetexpiresOn: body.KetexpiresOn ? new Date(body.KetexpiresOn) : null,
+      race: body.race,
+      email: body.email,
+      slug,
+      facilityId: body.facilityId, // Direct assignment instead of connect
+      assessmentData: body.assessmentData || {},
+    };
+
+    console.log("Creating patient with data:", patientData);
 
     const newPatient = await prisma.patient.create({
-      data: {
-        ...sanitizedData,
-        facility: { connect: { id: facilityId } },
-        slug: slug,
-
-        // Ensure `assessmentData` is passed correctly
+      data: patientData,
+      include: {
+        facility: true,
       },
     });
 
-    return new Response(JSON.stringify(newPatient), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    console.log("Created patient:", newPatient);
+    return NextResponse.json(newPatient, { status: 201 });
+  } catch (error: any) {
+    console.error("Error details:", {
+      code: error.code,
+      message: error.message,
+      meta: error.meta,
     });
-  } catch (error) {
-    console.error("Error in Prisma create function:", error);
-    return new Response(
-      JSON.stringify({
+
+    return NextResponse.json(
+      {
         error: "Failed to create patient",
-        details: error instanceof Error ? error.message : "Unknown error",
-      }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+        details: error.message,
+      },
+      { status: 500 }
     );
   }
 }
