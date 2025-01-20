@@ -1,27 +1,30 @@
 // pages/api/patient/[id].ts
 
-import { NextApiRequest, NextApiResponse } from 'next';
-import prisma from '@/lib/prisma'; 
-import { getPatientById } from '@/lib/patient';
+import { NextApiRequest, NextApiResponse } from "next";
+import prisma from "@/lib/prisma";
+import { getPatientById } from "@/lib/patient";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const { id } = req.query;
-  const patientId = parseInt(id as string);
+  const patientId = id as string;
 
   switch (req.method) {
-    case 'GET':
+    case "GET":
       try {
         const patient = await getPatientById(patientId);
         if (!patient) {
-          return res.status(404).json({ error: 'Patient not found' });
+          return res.status(404).json({ error: "Patient not found" });
         }
         return res.status(200).json(patient);
       } catch (error) {
         console.error(error);
-        return res.status(500).json({ error: 'Failed to fetch patient' });
+        return res.status(500).json({ error: "Failed to fetch patient" });
       }
 
-    case 'PUT':
+    case "PUT":
       try {
         // 1. Parse the incoming body
         const {
@@ -70,14 +73,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (Array.isArray(notes) && notes.length > 0) {
             await tx.note.createMany({
               data: notes.map((n: any) => ({
-                text: n.description || '',
+                text: n.description || "",
                 patientId,
-                title: n.title || '(No title)',
+                title: n.title || "(No title)",
               })),
             });
           }
 
-          // 2d. Replace ALERTS (system + user-defined) 
+          // 2d. Replace ALERTS (system + user-defined)
           //     For this example, we assume you want to nuke old alerts
           //     and insert all new ones from `generatedAlerts`.
           await tx.alert.deleteMany({
@@ -107,12 +110,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         return res.status(200).json(updatedPatient);
       } catch (error) {
-        console.error('Error updating patient:', error);
-        return res.status(500).json({ error: 'Failed to update patient' });
+        console.error("Error updating patient:", error);
+        return res.status(500).json({ error: "Failed to update patient" });
       }
 
     default:
-      res.setHeader('Allow', ['GET', 'PUT']);
-      return res.status(405).json({ error: `Method ${req.method} not allowed` });
+      res.setHeader("Allow", ["GET", "PUT"]);
+      return res
+        .status(405)
+        .json({ error: `Method ${req.method} not allowed` });
   }
 }
