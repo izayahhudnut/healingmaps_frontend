@@ -19,11 +19,12 @@ import {
 } from "./ui/form";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { signIn, useSession } from "next-auth/react";
+import { useToast } from "@/hooks/use-toast";
 
 const SignIn = () => {
   const { data: session } = useSession();
   const router = useRouter();
-
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +53,18 @@ const SignIn = () => {
 
         redirect: false,
       });
+
+      console.log(result);
+
+      if (result?.error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Wrong Credentials",
+        });
+      } else {
+        router.push("/");
+      }
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Please try again.");

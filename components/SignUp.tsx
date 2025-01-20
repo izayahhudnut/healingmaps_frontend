@@ -26,6 +26,7 @@ import { useRouter } from "next/navigation";
 import OtpComp from "./OtpComp";
 import { signIn, useSession } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 type Props = {};
 
@@ -92,7 +93,7 @@ const SignUp = (props: Props) => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: err.message,
+        description: err?.response.data.message,
       });
     } finally {
       setIsLoading(false);
@@ -262,6 +263,15 @@ const SignUp = (props: Props) => {
               <Button disabled={isLoading} type="submit">
                 {isLoading ? "Creating.." : "Create Facility"}
               </Button>
+            </div>
+
+            <div>
+              <p className="text-center text-gray-600">
+                Already have an account?{" "}
+                <Link href="/sign-in" className="text-blue-500">
+                  Sign in
+                </Link>
+              </p>
             </div>
           </form>
         </Form>

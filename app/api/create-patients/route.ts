@@ -62,7 +62,7 @@ export async function POST(req: Request) {
     race: race || "Not Specified",
     email: email.trim().toLowerCase(),
     facilityId,
-    assessmentData: assessmentData ?? null, // Default to null if undefined
+    assessmentData: assessmentData ?? {}, // Default to null if undefined
   };
 
   console.log("Sanitized data:", sanitizedData);
@@ -88,6 +88,7 @@ export async function POST(req: Request) {
         ...sanitizedData,
         facility: { connect: { id: facilityId } },
         slug: slug,
+
         // Ensure `assessmentData` is passed correctly
       },
     });

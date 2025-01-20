@@ -35,6 +35,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
 
         if (!user) {
+          console.log("No user found with this email.");
           throw new Error("No user found with this email.");
         }
 

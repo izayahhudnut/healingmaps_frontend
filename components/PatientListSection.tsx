@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useSession } from "next-auth/react";
+import axios from "axios";
 
 type Facility = {
   id: number;
@@ -186,25 +187,19 @@ export default function PatientListSection() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/create-patients", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...newPatient,
-          KetissuedOn: newPatient.KetissuedOn || null,
-          KetexpiresOn: newPatient.KetexpiresOn || null,
+      const response = await axios.post("/api/create-patients", {
+        ...newPatient,
+        KetissuedOn: newPatient.KetissuedOn || null,
+        KetexpiresOn: newPatient.KetexpiresOn || null,
 
-          facilityId:
-            session?.user.role === "FACILITY" ? session.user.id : null, // Explicitly provide a value for facilityId
-        }),
+        facilityId: session?.user.role === "FACILITY" ? session.user.id : "", // Explicitly provide a value for facilityId
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to add patient");
+      if (!response.data) {
+        throw new Error("Failed to add patient");
       }
 
-      const createdPatient = await response.json();
+      const createdPatient = await response.data;
       setPatients((prev) => [...prev, createdPatient]);
       setSuccess(true);
       setShowPopup(false);

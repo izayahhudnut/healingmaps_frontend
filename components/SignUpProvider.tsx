@@ -21,11 +21,11 @@ import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 
 type Props = {};
 
 const SignUpProvider = (props: Props) => {
-  const { isLoaded, signUp, setActive } = useSignUp();
   const { toast } = useToast();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -46,221 +46,195 @@ const SignUpProvider = (props: Props) => {
       nipNumber: "",
       password: "",
       confirmPassword: "",
+      facilityId: "",
     },
   });
 
   const onSubmit = async (data: ProviderCreate) => {
-    if (!isLoaded) return;
     console.log(data);
-
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const signUpAttempt = await signUp.create({
-        emailAddress: data.email,
-        password: data.password,
-
-        unsafeMetadata: {
-          firstName: data.firstName,
-          lastName: data.lastName,
-          nipNumber: data.nipNumber,
-          imageUrl: data.imageUrl,
-          role: "provider",
-        },
-      });
-      console.log(signUpAttempt);
-
-      setEmail(data?.email || "");
+      if (data.password !== data.confirmPassword) {
+        throw new Error("Passwords do not match");
+      }
 
       const response = await axios.post("/api/create-provider", {
         ...data,
-        clerkUserId: signUpAttempt.id,
+        facilityId: data.facilityId || "",
       });
 
-      console.log("provider created:", response.data);
+      console.log("Facility created:", response.data);
 
-      await signUp.prepareEmailAddressVerification({
-        strategy: "email_code",
-      });
-
-      setPendingVerification(true);
+      // setPendingVerification(true);
 
       toast({
         variant: "default",
         title: "Success",
         description: "Provider created successfully",
       });
-    } catch (error: any) {
-      console.error("Provider up error:", error);
+      form.reset();
+    } catch (err: any) {
+      console.error("Sign up error:", err);
 
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: err.response.data.error,
       });
     } finally {
       setIsLoading(false);
+      router.refresh();
     }
   };
 
-  const verifyEmail = async () => {
-    if (!isLoaded) return;
-    try {
-      const userVerify = await signUp.attemptEmailAddressVerification({
-        code,
-      });
-      console.log("Email verification successful:", userVerify);
-      if (userVerify.status !== "complete") {
-        console.log("Email not verified");
-      }
-      if (userVerify.status === "complete") {
-        console.log("Email verified");
-        setActive({
-          session: userVerify.createdSessionId,
-        });
+  // const verifyEmail = async () => {
+  //   if (!isLoaded) return;
+  //   try {
+  //     const userVerify = await signUp.attemptEmailAddressVerification({
+  //       code,
+  //     });
+  //     console.log("Email verification successful:", userVerify);
+  //     if (userVerify.status !== "complete") {
+  //       console.log("Email not verified");
+  //     }
+  //     if (userVerify.status === "complete") {
+  //       console.log("Email verified");
+  //       setActive({
+  //         session: userVerify.createdSessionId,
+  //       });
 
-        router.push("/");
-      }
+  //       router.push("/");
+  //     }
 
-      setPendingVerification(false);
-    } catch (err: any) {
-      console.error("Email verification error:", err);
-    }
-  };
-
-  if (!isLoaded) {
-    return (
-      <>
-        <h1 className="text-2xl font-semibold text-center">
-          Create an Provider
-        </h1>
-        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-      </>
-    );
-  }
+  //     setPendingVerification(false);
+  //   } catch (err: any) {
+  //     console.error("Email verification error:", err);
+  //   }
+  // };
 
   return (
     <div className="max-w-lg w-2/3 flex flex-col p-6 my-auto mx-auto rounded-lg shadow-lg ">
-      {pendingVerification ? (
-        <OtpComp
-          email={email}
-          code={code}
-          setCode={setCode}
-          verifyEmail={verifyEmail}
-        />
-      ) : (
-        <>
-          <div className="flex gap-2 my-2">
-            <h1 className="text-2xl font-semibold text-center">
-              Create an account{" "}
-            </h1>
-            <Badge className="bg-purple-800">Provider Only</Badge>
-          </div>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {[
-                {
-                  name: "firstName",
-                  label: "First Name",
-                  placeholder: "John",
-                  required: true,
-                },
-                {
-                  name: "lastName",
-                  label: "Last Name",
-                  placeholder: "Doe",
-                  required: true,
-                },
-                {
-                  name: "email",
-                  label: "Email",
-                  placeholder: "example@gmail.com",
-                  required: true,
-                },
-                {
-                  name: "nipNumber",
-                  label: "NIP Number",
-                  placeholder: "081234567890",
-                  required: false,
-                },
+      <>
+        <div className="flex gap-2 my-2">
+          <h1 className="text-2xl font-semibold text-center">
+            Create an account{" "}
+          </h1>
+          <Badge className="bg-purple-800">Provider Only</Badge>
+        </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {[
+              {
+                name: "firstName",
+                label: "First Name",
+                placeholder: "John",
+                required: true,
+              },
+              {
+                name: "lastName",
+                label: "Last Name",
+                placeholder: "Doe",
+                required: true,
+              },
+              {
+                name: "email",
+                label: "Email",
+                placeholder: "example@gmail.com",
+                required: true,
+              },
+              {
+                name: "nipNumber",
+                label: "NIP Number",
+                placeholder: "081234567890",
+                required: false,
+              },
 
-                {
-                  name: "password",
-                  label: "Password",
-                  placeholder: "********",
-                  type: showPassword ? "text" : "password",
-                  required: true,
-                  icon: showPassword ? (
-                    <AiOutlineEyeInvisible
-                      className="w-4 h-4 cursor-pointer"
-                      onClick={() => setShowPassword(false)}
-                    />
-                  ) : (
-                    <AiOutlineEye
-                      className="w-4 h-4 cursor-pointer"
-                      onClick={() => setShowPassword(true)}
-                    />
-                  ),
-                },
-                {
-                  name: "confirmPassword",
-                  label: "Confirm Password",
-                  placeholder: "********",
-                  type: showPassword ? "text" : "password",
-                  required: true,
-                  icon: showPassword ? (
-                    <AiOutlineEyeInvisible
-                      className="w-4 h-4 cursor-pointer"
-                      onClick={() => setShowPassword(false)}
-                    />
-                  ) : (
-                    <AiOutlineEye
-                      className="w-4 h-4 cursor-pointer"
-                      onClick={() => setShowPassword(true)}
-                    />
-                  ),
-                },
-              ].map((field) => (
-                <FormField
-                  key={field.name}
-                  control={form.control}
-                  name={field.name as "email" | "password"}
-                  render={({ field: formField }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {field.label}{" "}
-                        {field.required && (
-                          <span className="text-red-500">*</span>
+              {
+                name: "password",
+                label: "Password",
+                placeholder: "********",
+                type: showPassword ? "text" : "password",
+                required: true,
+                icon: showPassword ? (
+                  <AiOutlineEyeInvisible
+                    className="w-4 h-4 cursor-pointer"
+                    onClick={() => setShowPassword(false)}
+                  />
+                ) : (
+                  <AiOutlineEye
+                    className="w-4 h-4 cursor-pointer"
+                    onClick={() => setShowPassword(true)}
+                  />
+                ),
+              },
+              {
+                name: "confirmPassword",
+                label: "Confirm Password",
+                placeholder: "********",
+                type: showPassword ? "text" : "password",
+                required: true,
+                icon: showPassword ? (
+                  <AiOutlineEyeInvisible
+                    className="w-4 h-4 cursor-pointer"
+                    onClick={() => setShowPassword(false)}
+                  />
+                ) : (
+                  <AiOutlineEye
+                    className="w-4 h-4 cursor-pointer"
+                    onClick={() => setShowPassword(true)}
+                  />
+                ),
+              },
+            ].map((field) => (
+              <FormField
+                key={field.name}
+                control={form.control}
+                name={field.name as "email" | "password"}
+                render={({ field: formField }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {field.label}{" "}
+                      {field.required && (
+                        <span className="text-red-500">*</span>
+                      )}
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          placeholder={field.placeholder}
+                          type={field.type || "text"}
+                          {...formField}
+                        />
+                        {field.icon && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {field.icon}
+                          </div>
                         )}
-                      </FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            placeholder={field.placeholder}
-                            type={field.type || "text"}
-                            {...formField}
-                          />
-                          {field.icon && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                              {field.icon}
-                            </div>
-                          )}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ))}
 
-              <div className="flex justify-center">
-                <Button disabled={isLoading} type="submit">
-                  {isLoading ? "Creating.." : "Create Provider"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </>
-      )}
+            <div className="flex justify-center">
+              <Button disabled={isLoading} type="submit">
+                {isLoading ? "Creating.." : "Create Provider"}
+              </Button>
+            </div>
+
+            <div>
+              <p className="text-center text-gray-600">
+                Already have an account?{" "}
+                <Link href="/sign-in" className="text-blue-500">
+                  Sign in
+                </Link>
+              </p>
+            </div>
+          </form>
+        </Form>
+      </>
     </div>
   );
 };
