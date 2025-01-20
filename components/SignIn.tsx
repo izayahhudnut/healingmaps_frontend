@@ -51,7 +51,8 @@ const SignIn = () => {
         email: data.email,
         password: data.password,
 
-        redirect: false,
+        // Redirect to the home page if the sign-in is successful
+        callbackUrl: "/",
       });
 
       console.log(result);
