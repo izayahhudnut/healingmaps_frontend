@@ -14,7 +14,7 @@ export default function SignUpPage() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="flex items-center justify-center gap-6">
           <Link href="/sign-up/facility">
             <div className="relative group">
               <div className="rounded-lg border-2 border-gray-200 p-6 hover:border-purple-500 transition-all duration-300 hover:shadow-lg">
@@ -28,14 +28,14 @@ export default function SignUpPage() {
                   Create an account for your medical facility or clinic to
                   manage providers and patients.
                 </p>
-                <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute bottom-3 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                   <span className="text-purple-600">Get started →</span>
                 </div>
               </div>
             </div>
           </Link>
 
-          <Link href="/sign-up/provider">
+          {/* <Link href="/sign-up/provider">
             <div className="relative group">
               <div className="rounded-lg border-2 border-gray-200 p-6 hover:border-purple-500 transition-all duration-300 hover:shadow-lg">
                 <div className="flex items-center space-x-4 mb-4">
@@ -53,7 +53,7 @@ export default function SignUpPage() {
                 </div>
               </div>
             </div>
-          </Link>
+          </Link> */}
         </div>
       </div>
     </div>

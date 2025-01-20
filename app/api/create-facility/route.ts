@@ -16,8 +16,9 @@ import bcrypt from "bcryptjs";
 
 interface FacilityPayload {
   email: string;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
+  name: string;
   userId: string;
   address: string;
   city: string;
@@ -44,6 +45,7 @@ export async function POST(req: NextRequest) {
       email,
       firstName,
       lastName,
+      name,
       address,
       city,
       state,
@@ -83,10 +85,11 @@ export async function POST(req: NextRequest) {
 
     const createUser = await prisma.user.create({
       data: {
+        name: name,
         email,
         password: hashedPassword,
-        firstName,
-        lastName,
+        firstName: firstName,
+        lastName: lastName,
         role: "FACILITY",
       },
     });
@@ -109,6 +112,7 @@ export async function POST(req: NextRequest) {
       },
       create: {
         email,
+        name,
         firstName,
         lastName,
         address,

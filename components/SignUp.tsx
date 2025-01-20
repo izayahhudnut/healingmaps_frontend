@@ -52,8 +52,7 @@ const SignUp = (props: Props) => {
   const form = useForm<FacilityCreate>({
     resolver: zodResolver(FacilityCreateSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
+      name: "",
       address: "",
       city: "",
       state: "",
@@ -137,17 +136,12 @@ const SignUp = (props: Props) => {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {[
               {
-                name: "firstName",
-                label: "First Name",
-                placeholder: "Jhon Doe",
+                name: "name",
+                label: "Facility Name",
+                placeholder: "Facility Name",
                 required: true,
               },
-              {
-                name: "lastName",
-                label: "Last Name",
-                placeholder: "Jhon Doe",
-                required: true,
-              },
+
               {
                 name: "address",
                 label: "Address",

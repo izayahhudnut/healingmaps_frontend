@@ -11,6 +11,8 @@ export default async function handler(
   const { id } = req.query;
   const patientId = id as string;
 
+  console.log("Patient ID:", patientId);
+
   switch (req.method) {
     case "GET":
       try {
@@ -26,37 +28,31 @@ export default async function handler(
 
     case "PUT":
       try {
-        // 1. Parse the incoming body
         const {
           thcInteraction,
           cbdInteraction,
           ketamineInteraction,
           medications = [],
           notes = [],
-          // new fields:
-          assessmentData = null,
-          // Or, if your front-end calls it `generatedAlerts`:
+          assessmentData = {},
           generatedAlerts = [],
         } = req.body;
 
-        // 2. Run everything in a transaction
+        console.log("Updating patient:", req.body);
+
         const updatedPatient = await prisma.$transaction(async (tx) => {
-          // 2a. Update the patient toggles & store `assessmentData` (if your Patient has a JSON column)
           await tx.patient.update({
             where: { id: patientId },
             data: {
               thcInteraction: !!thcInteraction,
               cbdInteraction: !!cbdInteraction,
               ketamineInteraction: !!ketamineInteraction,
-              assessmentData, // <--- store the entire assessment data JSON
+              assessmentData,
             },
           });
 
-          // 2b. Replace MEDICATIONS
-          await tx.medication.deleteMany({
-            where: { patientId },
-          });
-          if (Array.isArray(medications) && medications.length > 0) {
+          await tx.medication.deleteMany({ where: { patientId } });
+          if (medications.length > 0) {
             await tx.medication.createMany({
               data: medications.map((m: any) => ({
                 name: m.drugName,
@@ -66,11 +62,8 @@ export default async function handler(
             });
           }
 
-          // 2c. Replace NOTES
-          await tx.note.deleteMany({
-            where: { patientId },
-          });
-          if (Array.isArray(notes) && notes.length > 0) {
+          await tx.note.deleteMany({ where: { patientId } });
+          if (notes.length > 0) {
             await tx.note.createMany({
               data: notes.map((n: any) => ({
                 text: n.description || "",
@@ -80,13 +73,8 @@ export default async function handler(
             });
           }
 
-          // 2d. Replace ALERTS (system + user-defined)
-          //     For this example, we assume you want to nuke old alerts
-          //     and insert all new ones from `generatedAlerts`.
-          await tx.alert.deleteMany({
-            where: { patientId },
-          });
-          if (Array.isArray(generatedAlerts) && generatedAlerts.length > 0) {
+          await tx.alert.deleteMany({ where: { patientId } });
+          if (generatedAlerts.length > 0) {
             await tx.alert.createMany({
               data: generatedAlerts.map((a: any) => ({
                 patientId,
@@ -96,7 +84,6 @@ export default async function handler(
             });
           }
 
-          // 2e. Return the fully updated patient
           return tx.patient.findUnique({
             where: { id: patientId },
             include: {
@@ -109,9 +96,11 @@ export default async function handler(
         });
 
         return res.status(200).json(updatedPatient);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error updating patient:", error);
-        return res.status(500).json({ error: "Failed to update patient" });
+        return res
+          .status(500)
+          .json({ error: error.message || "Failed to update patient" });
       }
 
     default:

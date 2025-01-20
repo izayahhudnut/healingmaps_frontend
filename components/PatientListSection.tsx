@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { TfiNewWindow } from "react-icons/tfi";
 import { toast } from "react-toastify";
@@ -44,10 +44,13 @@ type NewPatient = {
   email: string;
 };
 
-export default function PatientListSection() {
+export default function PatientListSection({ user }: any) {
+  const facilityId = user?.facilityId;
+
   const [patients, setPatients] = useState<Patient[]>([]);
 
   console.log("Patients:", patients);
+
   const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState<boolean>(true);
@@ -68,9 +71,7 @@ export default function PatientListSection() {
   const [selectedPatients, setSelectedPatients] = useState<number[]>([]);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
-  const { data: session }: any = useSession();
-
-  console.log("Session:", session);
+  console.log("Session:");
 
   useEffect(() => {
     fetchPatients();
@@ -89,8 +90,16 @@ export default function PatientListSection() {
       // const demoFacilityPatients = data.filter(
       //   (patient) => patient.facility?.name === "Demo"
       // );
+
+      const demoFacilityPatients = data.filter(
+        (patient: any) => patient?.facilityId === facilityId
+      );
+
+      console.log("Demo facility patients:", demoFacilityPatients);
       setPatients(data);
-      setFilteredPatients(data); // Initialize the filtered list
+      setFilteredPatients(demoFacilityPatients); // Initialize the filtered list
+
+      setLoading(false);
     } catch (err) {
       console.error("Error fetching patients:", err);
       setError("Unable to load patients. Please try again later.");
@@ -98,6 +107,12 @@ export default function PatientListSection() {
       setLoading(false);
     }
   }
+
+  const filteredPatientsData = useMemo(() => {
+    return patients.filter((patient) =>
+      patient.firstName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, []);
 
   const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
@@ -198,7 +213,8 @@ export default function PatientListSection() {
         ...newPatient,
         KetissuedOn: newPatient.KetissuedOn || null,
         KetexpiresOn: newPatient.KetexpiresOn || null,
-        facilityId: "cm63w3i260002j5rnrjf5785c",
+
+        facilityEmail: user?.email,
       });
 
       const createdPatient = response.data;

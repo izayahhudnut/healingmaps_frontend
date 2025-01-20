@@ -2,8 +2,10 @@ import { z } from "zod";
 
 const FacilityCreateSchema = z
   .object({
-    firstName: z.string().min(1, "First name is required"),
-    lastName: z.string().min(1, "Last name is required"),
+    firstName: z.string().min(1, "First name is required").optional(),
+
+    lastName: z.string().min(1, "Last name is required").optional(),
+    name: z.string().min(1, "Facility name is required"),
     address: z.string().min(1, "Address is required"),
     city: z.string().min(1, "City is required"),
     state: z.string().min(1, "State is required"),

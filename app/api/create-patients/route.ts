@@ -8,15 +8,22 @@ export async function POST(req: Request) {
 
     // Log facility check
     console.log("Checking facility:", body.facilityId);
+
     const facility = await prisma.facility.findUnique({
-      where: { id: body.facilityId },
+      where: { email: body.facilityEmail },
     });
     console.log("Found facility:", facility);
 
-    if (!facility) {
-      console.log("Facility not found with ID:", body.facilityId);
+    const provider = await prisma.provider.findUnique({
+      where: { email: body.facilityEmail },
+    });
+
+    if (!facility && !provider) {
       return NextResponse.json(
-        { error: `Facility not found with ID: ${body.facilityId}` },
+        {
+          error: "Facility or provider not found",
+          details: "Facility or provider not found",
+        },
         { status: 404 }
       );
     }
@@ -35,8 +42,8 @@ export async function POST(req: Request) {
       race: body.race,
       email: body.email,
       slug,
-      facilityId: body.facilityId, // Direct assignment instead of connect
-      assessmentData: body.assessmentData || {},
+      facilityId: facility ? facility.id : provider?.facilityId, // Direct assignment instead of connect
+      assessmentData: body.assessmentData || null,
     };
 
     console.log("Creating patient with data:", patientData);

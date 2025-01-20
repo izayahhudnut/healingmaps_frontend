@@ -24,15 +24,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       // @ts-ignore
       async authorize(credentials: Record<"email" | "password", string>) {
+        console.log("Credentials:", credentials);
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Please provide both email and password.");
         }
 
         console.log("Authorizing user");
 
-        const user = await prisma.user.findUnique({
+        const user: any = await prisma.user.findUnique({
           where: { email: credentials?.email as string },
+          include: {
+            Facility: true,
+            Provider: true,
+          },
         });
+
+        console.log("User found:", user);
 
         if (!user) {
           console.log("No user found with this email.");
@@ -47,14 +54,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("Invalid email or password.");
         }
 
-        console.log("User found and password is valid");
+        const facilityId = user.Facility[0]?.id || user.Provider[0]?.facilityId;
+
+        console.log("User found and password is valid", facilityId);
 
         return {
           id: user.id,
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
+          name: user.name,
           role: user.role,
+          facilityId,
         };
       },
     }),
@@ -68,8 +79,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
         token.role = user.role;
         token.email = user.email;
+        token.name = user.name;
         token.firstName = user.firstName; // Add firstName
         token.lastName = user.lastName; // Add lastName
+        token.facilityId = user.facilityId; // Add facilityId
       }
       return token;
     },
@@ -77,10 +90,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user = {
         id: token.id,
         email: token.email,
-        name: `${token.firstName} ${token.lastName}`, // Combine first and last names if needed
+        name: token.name, // Combine first and last names if needed
         role: token.role,
         firstName: token.firstName, // Add firstName
         lastName: token.lastName, // Add lastName
+        facilityId: token.facilityId, // Add facilityId
       };
       return session;
     },

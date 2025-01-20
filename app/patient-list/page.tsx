@@ -1,10 +1,12 @@
+import { auth } from "@/auth";
 import PatientListSection from "@/components/PatientListSection";
 
-export default function PatientListPage() {
+export default async function PatientListPage() {
+  const session = await auth();
+  console.log("Session:", session);
   return (
     <div>
-           <PatientListSection />
+      <PatientListSection user={session?.user} />
     </div>
-   
   );
 }
