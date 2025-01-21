@@ -17,6 +17,7 @@ import { User, Settings, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { Badge } from "./ui/badge";
 
 export default function Navbar() {
   const router = useRouter();
@@ -25,6 +26,8 @@ export default function Navbar() {
 
   // @ts-ignore
   const user: any = session?.user;
+
+  console.log(user, "USERSSSSSSSSS");
 
   const getLinkClass = (path: string) =>
     pathname === path ? " border-b-2 border-purple-400" : "hover:bg-gray-500";
@@ -67,6 +70,12 @@ export default function Navbar() {
             >
               Patient List
             </Link>
+            <Link
+              href="/provider"
+              className={`text-white  px-3 py-3 ${getLinkClass("/provider")}`}
+            >
+              Providers
+            </Link>
           </div>
         </div>
 
@@ -77,24 +86,31 @@ export default function Navbar() {
             <DropdownMenu>
               <DropdownMenuTrigger className="outline-none">
                 <Avatar>
-                  <AvatarImage src={user?.imageUrl} />
-                  <AvatarFallback>
-                    {user?.firstName?.charAt(0)}
-                    {user?.lastName?.charAt(0)}
+                  <AvatarImage src={user?.image} />
+                  <AvatarFallback className="bg-purple-500 text-white">
+                    {user?.firstName &&
+                      user?.firstName?.charAt(0).toUpperCase()}
+                    {user?.lastName && user?.lastName?.charAt(0).toUpperCase()}
+                    {user?.name && user?.name?.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <Badge className="bg-purple-500 mx-2 text-white">
+                  {user?.email}
+                </Badge>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
+                <Link href="/profile">
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                </Link>
+                {/* <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={onSignOut}
