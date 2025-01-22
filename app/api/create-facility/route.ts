@@ -1,138 +1,81 @@
 import prisma from "@/lib/prisma";
 import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
 
-// userId         String
-// user           User       @relation(fields: [userId], references: [id])
-// firstName      String?
-// lastName       String?
-// address        String
-// city           String
-// email          String     @unique
-// state          String
-// zip            String
-// phone          String
-// primaryContact String
+const FacilityPayloadSchema = z.object({
+  email: z.string().email(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  name: z.string().min(1),
+  address: z.string().min(1),
+  phoneNumber: z.string().min(1),
+  primaryContact: z.string().min(1),
+  password: z.string().min(6),
+});
 
-interface FacilityPayload {
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  name: string;
-  userId: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  phoneNumber: string;
-  primaryContact: string;
-  password: string;
-}
 
 export async function POST(req: NextRequest) {
   try {
-    const payload: FacilityPayload = await req.json();
-    if (!payload || typeof payload !== "object") {
-      console.error("Invalid payload received:", payload);
-      return new Response(JSON.stringify({ error: "Invalid payload format" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-    console.log("Webhook payload:", payload);
+    const payload = FacilityPayloadSchema.parse(await req.json());
+    console.log("Parsed Payload:", payload);
 
-    const {
-      email,
-      firstName,
-      lastName,
-      name,
-      address,
-      city,
-      state,
-      zipCode,
-      phoneNumber,
-      primaryContact,
-      password,
-    } = payload;
+    const hashedPassword = await bcrypt.hash(payload.password, 10);
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Log the data being passed to Prisma
-    console.log("Data passed to Prisma:", {
-      email,
-      firstName,
-      lastName,
-      address,
-      city,
-      state,
-      zip: zipCode,
-      phoneNumber,
-      primaryContact,
-      password: hashedPassword,
+    const existingUser = await prisma.user.findUnique({
+      where: { email: payload.email },
     });
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (user) {
-      console.error("User already exists with this email:", email);
+    if (existingUser) {
+      console.error("User already exists:", payload.email);
       return new Response(
-        JSON.stringify({ error: "User already exists with this email" }),
+        JSON.stringify({ error: "User already exists" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const createUser = await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
-        name: name,
-        email,
+        name: payload.name,
+        email: payload.email,
         password: hashedPassword,
-        firstName: firstName,
-        lastName: lastName,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
         role: "FACILITY",
       },
     });
+    console.log("User Created:", user);
 
-    console.log("User created:", createUser);
-
-    const facility = await prisma.facility.upsert({
-      where: { email },
-      update: {
-        email,
-        firstName,
-        lastName,
-        address,
-        city,
-        state,
-        zip: zipCode,
-        phone: phoneNumber,
-        primaryContact,
-        userId: createUser.id,
-      },
-      create: {
-        email,
-        name,
-        firstName,
-        lastName,
-        address,
-        city,
-        state,
-        zip: zipCode,
-        phone: phoneNumber,
-        primaryContact,
-        userId: createUser.id,
+    const facility = await prisma.facility.create({
+      data: {
+        email: payload.email,
+        name: payload.name,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        address: payload.address,
+        phone: payload.phoneNumber,
+        primaryContact: payload.primaryContact,
+        userId: user.id,
       },
     });
+    console.log("Facility Created:", facility);
 
     return new Response(JSON.stringify(facility), {
-      status: 200,
+      status: 201,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error: any) {
-    console.error("Error creating facility:", error.message, error.stack);
+    console.error("Error creating facility:", error);
+
+    if (error instanceof z.ZodError) {
+      return new Response(
+        JSON.stringify({ error: error.errors }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ error: "Failed to create facility" }),
+      JSON.stringify({ error: "Internal Server Error" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }

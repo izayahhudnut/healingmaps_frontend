@@ -340,16 +340,8 @@ export default function PatientListSection({ user }: any) {
                     required: true,
                     options: ["Male", "Female", "Other", "Prefer not to say"],
                   },
-                  {
-                    label: "Cannabis Certificate Issued On",
-                    name: "KetissuedOn",
-                    type: "date",
-                  },
-                  {
-                    label: "Cannabis Certificate Expires At",
-                    name: "KetexpiresOn",
-                    type: "date",
-                  },
+                 
+                
                   {
                     label: "Race",
                     name: "race",

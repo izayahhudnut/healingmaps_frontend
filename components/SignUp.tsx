@@ -23,7 +23,6 @@ import { FacilityCreate, FacilityCreateSchema } from "@/lib/zod/schema";
 import { Badge } from "./ui/badge";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import OtpComp from "./OtpComp";
 import { signIn, useSession } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -36,15 +35,9 @@ const SignUp = (props: Props) => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState<string>("");
-  // const [pendingVerification, setPendingVerification] = useState(false);
-  // const [code, setCode] = useState("");
-
   const [error, setError] = useState<string | null>(null);
 
-  console.log("Session:", session);
   if (session?.user?.id) {
     router.push("/");
   }
@@ -54,9 +47,6 @@ const SignUp = (props: Props) => {
     defaultValues: {
       name: "",
       address: "",
-      city: "",
-      state: "",
-      zipCode: "",
       phoneNumber: "",
       primaryContact: "",
       email: "",
@@ -77,14 +67,10 @@ const SignUp = (props: Props) => {
         ...data,
       });
 
-      console.log("Facility created:", response.data);
-
-      // setPendingVerification(true);
-
       toast({
         variant: "default",
         title: "Success",
-        description: "Facility created successfully",
+        description: "Clinic created successfully",
       });
     } catch (err: any) {
       console.error("Sign up error:", err);
@@ -92,7 +78,7 @@ const SignUp = (props: Props) => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: err?.response.data.message,
+        description: err?.response?.data?.message || "An error occurred",
       });
     } finally {
       setIsLoading(false);
@@ -100,72 +86,27 @@ const SignUp = (props: Props) => {
     }
   };
 
-  // const verifyEmail = async () => {
-  //   if (!isLoaded) return;
-  //   try {
-  //     const userVerify = await signUp.attemptEmailAddressVerification({ code });
-  //     console.log("Email verification successful:", userVerify);
-  //     if (userVerify.status !== "complete") {
-  //       console.log("Email not verified");
-  //     }
-  //     if (userVerify.status === "complete") {
-  //       console.log("Email verified");
-  //       setActive({
-  //         session: userVerify.createdSessionId,
-  //       });
-
-  //       router.push("/");
-  //     }
-
-  //     setPendingVerification(false);
-  //   } catch (err: any) {
-  //     console.error("Email verification error:", err);
-  //   }
-  // };
-
   return (
-    <div className="max-w-lg w-2/3 flex flex-col p-6 my-auto mx-auto rounded-lg shadow-lg ">
-      <>
-        <div className="flex gap-2 my-2">
-          <h1 className="text-2xl font-semibold text-center">
-            Create an account{" "}
-          </h1>
-          <Badge className="bg-purple-800">Multi-Provider Facility</Badge>
-        </div>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <div className="max-w-4xl w-full flex flex-col p-6 my-auto mx-auto rounded-lg shadow-lg">
+      <div className="flex gap-2 my-2">
+        <h1 className="text-2xl font-semibold text-center">
+          Create an account
+        </h1>
+      </div>
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-6"
+        >
+          <div className="flex flex-wrap gap-4">
             {[
               {
                 name: "name",
-                label: "Facility Name",
-                placeholder: "Facility Name",
+                label: "Clinic Name",
+                placeholder: "Clinic Name",
                 required: true,
               },
-
-              {
-                name: "address",
-                label: "Address",
-                placeholder: "123 Main St",
-                required: true,
-              },
-              {
-                name: "city",
-                label: "City",
-                placeholder: "New York",
-                required: true,
-              },
-              {
-                name: "state",
-                label: "State",
-                placeholder: "NY",
-                required: true,
-              },
-              {
-                name: "zipCode",
-                label: "Zip Code",
-                placeholder: "10001",
-                required: true,
-              },
+              
               {
                 name: "phoneNumber",
                 label: "Phone Number",
@@ -184,7 +125,6 @@ const SignUp = (props: Props) => {
                 placeholder: "example@example.com",
                 required: true,
               },
-
               {
                 name: "password",
                 label: "Password",
@@ -221,15 +161,21 @@ const SignUp = (props: Props) => {
                   />
                 ),
               },
+              {
+                name: "address",
+                label: "Address",
+                placeholder: "123 Main St",
+                required: true,
+              }
             ].map((field) => (
               <FormField
                 key={field.name}
                 control={form.control}
                 name={field.name as keyof FacilityCreate}
                 render={({ field: formField }) => (
-                  <FormItem>
+                  <FormItem className="flex-1 min-w-[240px]">
                     <FormLabel>
-                      {field.label}{" "}
+                      {field.label}
                       {field.required && (
                         <span className="text-red-500">*</span>
                       )}
@@ -253,23 +199,22 @@ const SignUp = (props: Props) => {
                 )}
               />
             ))}
-            <div className="flex justify-center">
-              <Button disabled={isLoading} type="submit">
-                {isLoading ? "Creating.." : "Create Facility"}
-              </Button>
-            </div>
-
-            <div>
-              <p className="text-center text-gray-600">
-                Already have an account?{" "}
-                <Link href="/sign-in" className="text-blue-500">
-                  Sign in
-                </Link>
-              </p>
-            </div>
-          </form>
-        </Form>
-      </>
+          </div>
+          <div className="flex justify-center">
+            <Button disabled={isLoading} type="submit">
+              {isLoading ? "Creating.." : "Create Clinic"}
+            </Button>
+          </div>
+          <div>
+            <p className="text-center text-gray-600">
+              Already have an account?{" "}
+              <Link href="/sign-in" className="text-blue-500">
+                Sign in
+              </Link>
+            </p>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 };

@@ -70,12 +70,14 @@ export default function Navbar() {
             >
               Patient List
             </Link>
-            <Link
-              href="/provider"
-              className={`text-white  px-3 py-3 ${getLinkClass("/provider")}`}
-            >
-              Providers
-            </Link>
+            {user?.role !== "PROVIDER" && (
+              <Link
+                href="/provider"
+                className={`text-white  px-3 py-3 ${getLinkClass("/provider")}`}
+              >
+                Providers
+              </Link>
+            )}
           </div>
         </div>
 
@@ -107,10 +109,6 @@ export default function Navbar() {
                     <span>Profile</span>
                   </DropdownMenuItem>
                 </Link>
-                {/* <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem> */}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={onSignOut}

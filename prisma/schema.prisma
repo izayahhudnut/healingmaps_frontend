@@ -11,13 +11,13 @@ model User {
   id        String     @id @default(cuid())
   email     String     @unique
   password  String
-  name      String?
   firstName String?
   lastName  String?
   image     String?
   role      Role
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  name      String?
   Facility  Facility[]
   Provider  Provider[]
 }
@@ -43,18 +43,15 @@ model Provider {
 model Facility {
   id             String     @id @default(cuid())
   userId         String
-  name           String
   address        String
-  city           String
   email          String     @unique
-  state          String
-  zip            String
   phone          String
   primaryContact String
   createdAt      DateTime   @default(now())
   updatedAt      DateTime?  @updatedAt
   firstName      String?
   lastName       String?
+  name           String
   user           User       @relation(fields: [userId], references: [id])
   patients       Patient[]
   providers      Provider[]
