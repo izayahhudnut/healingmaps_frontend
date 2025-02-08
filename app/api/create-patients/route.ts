@@ -33,6 +33,7 @@ export async function POST(req: Request) {
     }-${Date.now()}`.toLowerCase();
 
     const patientData = {
+      // create patient through medtraight. We can also call all of the data 
       firstName: body.firstName,
       lastName: body.lastName,
       dob: new Date(body.dob),
